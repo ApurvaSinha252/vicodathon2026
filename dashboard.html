@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Dashboard · ABTalks</title>
+<meta name="description" content="Your ABTalks dashboard — streak, today's task, progress and standing." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   ABTalks — Design tokens
+   Ink base (late-night, phone-first) + amber streak flame + commit-graph green
+   Display: Space Grotesk · Data/labels: JetBrains Mono · Body: Inter
+   ========================================================================== */
+:root{
+  --ink:#0A0D12;
+  --ink-2:#12161F;
+  --ink-3:#1A2029;
+  --ink-4:#232A35;
+  --line:rgba(255,255,255,.09);
+  --line-strong:rgba(255,255,255,.18);
+  --text:#F3F0E8;
+  --text-dim:#A3AAB8;
+  --text-faint:#5C6472;
+  --amber:#F5A524;
+  --amber-ink:#2A1D08;
+  --amber-dim:rgba(245,165,36,.14);
+  --commit:#39C169;
+  --commit-dim:rgba(57,193,105,.16);
+  --commit-missed-bg:#2A1B20;
+  --commit-missed-fg:#7A4750;
+  --cyan:#5FCFC7;
+  --cyan-dim:rgba(95,207,199,.14);
+  --danger:#E2564D;
+  --danger-dim:rgba(226,86,77,.14);
+  --radius-s:10px;
+  --radius-m:16px;
+  --radius-l:24px;
+  --shadow-card: 0 16px 40px -20px rgba(0,0,0,.55);
+  --shadow-pop: 0 24px 70px -24px rgba(0,0,0,.7);
+  --maxw-app: 460px;
+  --maxw-site: 1180px;
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+}
+h1,h2,h3,h4{
+  font-family:'Space Grotesk',sans-serif;
+  margin:0;
+  font-weight:600;
+  letter-spacing:-0.01em;
+}
+p{margin:0;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;}
+img{max-width:100%;display:block;}
+.mono{font-family:'JetBrains Mono',monospace;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px;}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;}
+}
+
+/* ---------- layout shells ---------- */
+.site{max-width:var(--maxw-site);margin:0 auto;padding:0 20px;}
+.app-shell{
+  max-width:var(--maxw-app);
+  margin:0 auto;
+  min-height:100dvh;
+  background:var(--ink);
+  position:relative;
+}
+@media (min-width:860px){
+  body.app-bg{
+    background:
+      radial-gradient(circle at 20% -10%, rgba(245,165,36,.08), transparent 45%),
+      radial-gradient(circle at 100% 10%, rgba(95,207,199,.06), transparent 40%),
+      var(--ink-3);
+  }
+  .app-shell{
+    margin:40px auto;
+    border:1px solid var(--line);
+    border-radius:32px;
+    box-shadow:var(--shadow-pop);
+    overflow:hidden;
+    min-height:calc(100dvh - 80px);
+  }
+}
+
+/* ---------- top nav (app pages) ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;
+  background:rgba(10,13,18,.85);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:8px;font-family:'Space Grotesk';font-weight:700;font-size:17px;}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);}
+.icon-btn{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--ink-2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-dim);
+}
+.back-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  color:var(--text-dim);font-size:14px;font-weight:500;
+  background:none;border:0;padding:4px 0;
+}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-weight:600;font-size:15px;
+  padding:14px 22px;border-radius:999px;border:1px solid transparent;
+  cursor:pointer;transition:transform .15s ease, filter .15s ease, background .15s ease;
+  width:100%;
+}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--amber);color:#1C1204;}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-primary:disabled{background:var(--ink-4);color:var(--text-faint);cursor:not-allowed;}
+.btn-ghost{background:var(--ink-2);color:var(--text);border-color:var(--line);}
+.btn-ghost:hover{border-color:var(--line-strong);}
+.btn-outline-cyan{background:transparent;color:var(--cyan);border-color:rgba(95,207,199,.35);}
+.btn-outline-cyan:hover{background:var(--cyan-dim);}
+.btn-sm{padding:9px 16px;font-size:13px;width:auto;}
+.btn-inline{width:auto;}
+
+/* ---------- card ---------- */
+.card{
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:var(--radius-l);
+  padding:20px;
+}
+
+/* ---------- pill / tag ---------- */
+.tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;letter-spacing:.02em;text-transform:uppercase;
+  padding:5px 10px;border-radius:999px;
+  background:var(--ink-3);color:var(--text-dim);border:1px solid var(--line);
+}
+.tag-amber{background:var(--amber-dim);color:var(--amber);border-color:rgba(245,165,36,.3);}
+.tag-cyan{background:var(--cyan-dim);color:var(--cyan);border-color:rgba(95,207,199,.3);}
+.tag-danger{background:var(--danger-dim);color:var(--danger);border-color:rgba(226,86,77,.3);}
+.tag-commit{background:var(--commit-dim);color:var(--commit);border-color:rgba(57,193,105,.3);}
+
+/* ==========================================================================
+   LANDING PAGE
+   ========================================================================== */
+.nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 0;
+}
+.nav-cta{display:none;}
+@media (min-width:720px){ .nav-cta{display:inline-flex;width:auto;padding:10px 20px;font-size:14px;} }
+
+.hero{padding:28px 0 8px;}
+.hero-eyebrow{
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--amber);
+  letter-spacing:.03em;display:flex;align-items:center;gap:8px;margin-bottom:18px;
+}
+.hero-eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);}
+.hero h1{
+  font-size:clamp(34px,8vw,64px);
+  line-height:1.04;
+  letter-spacing:-0.02em;
+}
+.hero h1 em{
+  font-style:normal;color:var(--amber);
+}
+.hero p.lede{
+  margin-top:18px;color:var(--text-dim);font-size:17px;line-height:1.6;max-width:52ch;
+}
+.hero-actions{display:flex;flex-direction:column;gap:12px;margin-top:26px;}
+.hero-note{font-size:13px;color:var(--text-faint);margin-top:4px;}
+@media (min-width:560px){
+  .hero-actions{flex-direction:row;}
+  .hero-actions .btn{width:auto;}
+}
+.hero-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;margin-top:34px;padding-top:22px;border-top:1px solid var(--line);
+}
+.stat b{display:block;font-family:'Space Grotesk';font-size:22px;}
+.stat span{font-size:12.5px;color:var(--text-faint);}
+
+@media (min-width:900px){
+  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center;}
+  .hero p.lede{max-width:46ch;}
+}
+
+/* signature: commit grid */
+.grid-panel{
+  margin-top:30px;background:linear-gradient(180deg,var(--ink-2),var(--ink-3));
+  border:1px solid var(--line);border-radius:var(--radius-l);padding:20px;
+}
+.grid-panel-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+.grid-panel-head h3{font-size:15px;}
+.grid-panel-head span{font-family:'JetBrains Mono';font-size:12px;color:var(--text-faint);}
+.commit-grid{
+  display:grid;grid-template-columns:repeat(10,1fr);gap:5px;
+}
+.cell{aspect-ratio:1;border-radius:3px;background:var(--ink-4);}
+.cell.done{background:var(--commit);}
+.cell.done.fade1{background:rgba(57,193,105,.65);}
+.cell.done.fade2{background:rgba(57,193,105,.4);}
+.cell.today{background:var(--amber);box-shadow:0 0 0 2px rgba(245,165,36,.35);}
+.cell.missed{background:var(--commit-missed-bg);}
+.grid-legend{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;}
+.grid-legend span{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-faint);}
+.grid-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;}
+
+.section{padding:64px 0;}
+.section-head{max-width:56ch;margin-bottom:36px;}
+.section-eyebrow{font-family:'JetBrains Mono';font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;display:block;}
+.section h2{font-size:clamp(24px,4.5vw,34px);}
+.section p.sub{color:var(--text-dim);margin-top:12px;font-size:15.5px;}
+
+.steps{display:grid;gap:14px;}
+.step{
+  display:flex;gap:16px;padding:20px;border:1px solid var(--line);border-radius:var(--radius-l);background:var(--ink-2);
+}
+.step-num{font-family:'JetBrains Mono';font-size:13px;color:var(--amber);flex:0 0 auto;padding-top:2px;}
+.step h4{font-size:16.5px;margin-bottom:6px;}
+.step p{color:var(--text-dim);font-size:14.5px;}
+@media (min-width:860px){ .steps{grid-template-columns:repeat(3,1fr);} .step{flex-direction:column;gap:10px;} }
+
+.tracks{display:flex;flex-wrap:wrap;gap:9px;}
+.track-chip{
+  padding:9px 14px;border-radius:999px;border:1px solid var(--line);
+  background:var(--ink-2);font-size:13.5px;color:var(--text-dim);display:flex;align-items:center;gap:8px;
+}
+.track-chip i{width:7px;height:7px;border-radius:50%;background:var(--cyan);}
+
+.testimonial{
+  border:1px solid var(--line);border-radius:var(--radius-l);padding:26px;background:var(--ink-2);
+  position:relative;
+}
+.testimonial p{font-size:17px;line-height:1.6;color:var(--text);font-family:'Space Grotesk';font-weight:500;}
+.testimonial .who{margin-top:18px;display:flex;align-items:center;gap:10px;}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--amber),var(--cyan));flex:0 0 auto;}
+.who b{font-size:14px;display:block;}
+.who span{font-size:12.5px;color:var(--text-faint);}
+
+.faq-item{border-bottom:1px solid var(--line);padding:18px 0;}
+.faq-item summary{cursor:pointer;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center;}
+.faq-item summary::-webkit-details-marker{display:none;}
+.faq-item summary::after{content:'+';color:var(--amber);font-size:20px;font-family:'JetBrains Mono';}
+.faq-item[open] summary::after{content:'–';}
+.faq-item p{margin-top:10px;color:var(--text-dim);font-size:14.5px;line-height:1.6;}
+
+.final-cta{
+  text-align:center;padding:52px 24px;border-radius:var(--radius-l);
+  background:radial-gradient(circle at 50% 0%, rgba(245,165,36,.14), transparent 60%), var(--ink-2);
+  border:1px solid var(--line);
+}
+.final-cta h2{font-size:clamp(24px,5vw,36px);margin-bottom:14px;}
+.final-cta p{color:var(--text-dim);margin-bottom:24px;max-width:44ch;margin-left:auto;margin-right:auto;}
+.final-cta .btn{max-width:280px;margin:0 auto;}
+
+footer.site-footer{padding:36px 0 60px;border-top:1px solid var(--line);margin-top:20px;}
+footer.site-footer .foot-row{display:flex;flex-direction:column;gap:14px;font-size:13px;color:var(--text-faint);}
+@media (min-width:640px){ footer.site-footer .foot-row{flex-direction:row;justify-content:space-between;align-items:center;} }
+
+/* ==========================================================================
+   DASHBOARD
+   ========================================================================== */
+.db-body{padding:0 20px 100px;}
+.greet{padding:22px 0 6px;display:flex;justify-content:space-between;align-items:flex-start;}
+.greet h1{font-size:22px;}
+.greet p{color:var(--text-faint);font-size:13.5px;margin-top:4px;}
+.streak-pill{
+  display:flex;align-items:center;gap:8px;background:var(--amber-dim);border:1px solid rgba(245,165,36,.3);
+  padding:8px 14px;border-radius:999px;flex:0 0 auto;
+}
+.streak-pill b{font-family:'JetBrains Mono';font-size:18px;color:var(--amber);}
+.streak-pill span{font-size:11px;color:var(--amber);opacity:.8;}
+
+.demo-switch{
+  display:flex;gap:6px;margin:16px 0 4px;padding:4px;background:var(--ink-2);border:1px solid var(--line);border-radius:999px;
+}
+.demo-switch button{
+  flex:1;border:0;background:transparent;color:var(--text-faint);font-size:11.5px;font-family:'JetBrains Mono';
+  padding:8px 6px;border-radius:999px;cursor:pointer;
+}
+.demo-switch button.active{background:var(--ink-4);color:var(--text);}
+
+.banner{
+  display:flex;gap:10px;align-items:flex-start;padding:14px 16px;border-radius:var(--radius-m);
+  margin:14px 0;font-size:13.5px;line-height:1.5;
+}
+.banner-danger{background:var(--danger-dim);border:1px solid rgba(226,86,77,.3);color:#F4B6B1;}
+.banner-amber{background:var(--amber-dim);border:1px solid rgba(245,165,36,.3);color:#F7CD8B;}
+.banner b{color:var(--text);}
+
+.today-card{
+  margin-top:16px;border-radius:var(--radius-l);padding:22px;
+  background:linear-gradient(155deg,#1C1408,var(--ink-2) 55%);
+  border:1px solid rgba(245,165,36,.25);position:relative;overflow:hidden;
+}
+.today-card::after{
+  content:'';position:absolute;right:-40px;top:-40px;width:140px;height:140px;border-radius:50%;
+  background:radial-gradient(circle,rgba(245,165,36,.18),transparent 70%);
+}
+.today-card .tag-row{display:flex;gap:8px;margin-bottom:14px;}
+.today-card h2{font-size:20px;margin-bottom:8px;line-height:1.3;}
+.today-card p{color:var(--text-dim);font-size:14px;line-height:1.55;margin-bottom:18px;}
+.today-meta{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
+.today-meta span{font-size:12px;color:var(--text-faint);display:flex;align-items:center;gap:5px;}
+
+.progress-row{display:grid;grid-template-columns:1fr;gap:14px;margin-top:18px;}
+@media (min-width:520px){ .progress-row{grid-template-columns:1.3fr 1fr;} }
+.progress-card{padding:18px;}
+.progress-card .label{font-size:12.5px;color:var(--text-faint);margin-bottom:10px;display:flex;justify-content:space-between;}
+.bar-track{height:8px;border-radius:99px;background:var(--ink-4);overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--amber),#ffcf7a);}
+.progress-card .num{font-family:'Space Grotesk';font-size:26px;margin-top:10px;}
+
+.ring-wrap{display:flex;align-items:center;gap:16px;}
+.ring-wrap .num{font-size:26px;}
+.ring-wrap .sub{font-size:12px;color:var(--text-faint);}
+
+.section-title{display:flex;justify-content:space-between;align-items:baseline;margin:28px 0 12px;}
+.section-title h3{font-size:15.5px;}
+.section-title a{font-size:12.5px;color:var(--cyan);}
+
+.badges{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;margin:0 -4px;}
+.badge{
+  flex:0 0 auto;width:98px;text-align:center;padding:14px 10px;border-radius:var(--radius-m);
+  background:var(--ink-2);border:1px solid var(--line);
+}
+.badge .ic{font-size:22px;margin-bottom:8px;}
+.badge b{font-size:11px;display:block;line-height:1.3;}
+.badge.locked{opacity:.4;}
+.empty-badges{
+  border:1px dashed var(--line-strong);border-radius:var(--radius-m);padding:22px 16px;text-align:center;color:var(--text-faint);font-size:13px;
+}
+.empty-badges b{color:var(--text-dim);display:block;margin-bottom:4px;font-size:13.5px;}
+
+.grid-panel.db{margin-top:6px;}
+.grid-scale{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-faint);margin-top:8px;font-family:'JetBrains Mono';}
+
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:30;
+  background:rgba(10,13,18,.9);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  display:flex;justify-content:center;
+}
+.app-shell .bottom-nav{position:sticky;}
+.bottom-nav-inner{display:flex;width:100%;max-width:var(--maxw-app);}
+.bottom-nav a{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 14px;
+  font-size:10.5px;color:var(--text-faint);
+}
+.bottom-nav a.active{color:var(--amber);}
+.bottom-nav .ic{font-size:18px;}
+
+/* ==========================================================================
+   DAY PAGE
+   ========================================================================== */
+.day-body{padding:0 20px 40px;}
+.day-head{padding:18px 0 8px;display:flex;justify-content:space-between;align-items:center;}
+.day-strip{display:flex;gap:5px;margin:14px 0 4px;}
+.day-strip .cell{width:100%;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'JetBrains Mono';color:rgba(255,255,255,.5);}
+.day-strip .cell.today{color:#1C1204;font-weight:700;}
+
+.day-title{margin-top:18px;}
+.day-title .tag-row{display:flex;gap:8px;margin-bottom:12px;}
+.day-title h1{font-size:23px;line-height:1.3;}
+
+.meta-row{display:flex;gap:16px;margin:14px 0 20px;flex-wrap:wrap;}
+.meta-row span{font-size:12.5px;color:var(--text-faint);display:flex;align-items:center;gap:5px;}
+
+.task-desc{color:var(--text-dim);font-size:14.5px;line-height:1.65;margin-bottom:22px;}
+
+.checklist{list-style:none;margin:0;padding:0;display:grid;gap:10px;margin-bottom:26px;}
+.checklist li{
+  display:flex;gap:10px;align-items:flex-start;padding:13px 14px;background:var(--ink-2);
+  border:1px solid var(--line);border-radius:var(--radius-m);font-size:13.5px;color:var(--text-dim);
+}
+.checklist li .chk{
+  width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line-strong);flex:0 0 auto;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--commit);
+}
+
+.divider-label{
+  display:flex;align-items:center;gap:10px;margin:30px 0 16px;color:var(--text-faint);font-size:12px;font-family:'JetBrains Mono';text-transform:uppercase;letter-spacing:.04em;
+}
+.divider-label::after{content:'';flex:1;height:1px;background:var(--line);}
+
+.field{margin-bottom:14px;}
+.field label{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-dim);margin-bottom:7px;font-weight:500;}
+.field input, .field textarea{
+  width:100%;background:var(--ink-2);border:1px solid var(--line);border-radius:var(--radius-m);
+  padding:13px 14px;color:var(--text);font-size:14px;font-family:'JetBrains Mono';
+}
+.field textarea{font-family:'Inter';resize:vertical;min-height:96px;line-height:1.5;}
+.field input:focus, .field textarea:focus{border-color:var(--amber);}
+.field input::placeholder,.field textarea::placeholder{color:var(--text-faint);}
+.field-hint{font-size:11.5px;color:var(--text-faint);margin-top:6px;}
+
+.assist-box{
+  border:1px dashed rgba(95,207,199,.35);background:var(--cyan-dim);border-radius:var(--radius-m);
+  padding:14px;margin:6px 0 18px;
+}
+.assist-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;}
+.assist-head b{font-size:13px;color:var(--cyan);}
+.assist-head button{background:none;border:0;color:var(--cyan);font-size:12px;font-weight:600;cursor:pointer;flex:0 0 auto;white-space:nowrap;text-decoration:underline;text-underline-offset:3px;}
+.assist-box p{font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+
+.submit-row{position:sticky;bottom:0;background:linear-gradient(0deg,var(--ink) 60%,transparent);padding:18px 0 6px;margin-top:10px;}
+
+.day-nav{display:flex;gap:10px;margin-top:26px;}
+.day-nav a, .day-nav span{
+  flex:1;padding:14px;border-radius:var(--radius-m);border:1px solid var(--line);background:var(--ink-2);
+  font-size:12.5px;color:var(--text-faint);text-align:center;
+}
+.day-nav .avail{color:var(--text);}
+.day-nav .locked{opacity:.5;}
+
+.success-state{text-align:center;padding:50px 16px 30px;}
+.success-ring{
+  width:78px;height:78px;border-radius:50%;background:var(--commit-dim);border:1px solid rgba(57,193,105,.4);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px;color:var(--commit);
+}
+.success-state h2{font-size:20px;margin-bottom:8px;}
+.success-state p{color:var(--text-dim);font-size:14px;margin-bottom:24px;}
+.hidden{display:none !important;}
+
+</style>
+</head>
+<body class="app-bg">
+<script>
+/* ==========================================================================
+   ABTalks — mock data (stands in for the real API / DB)
+   ========================================================================== */
+const ABTALKS_DATA = {
+  student: {
+    name: "Ananya",
+    fullName: "Ananya Rao",
+    track: "Web Development",
+    college: "VIT, Vellore",
+    year: "3rd Year",
+    startDate: "2026-07-28"
+  },
+  challenge: {
+    totalDays: 60,
+    currentDay: 12,
+    /* day statuses across the whole challenge: "done" | "missed" | "today" | "upcoming" */
+    days: (function () {
+      const arr = [];
+      for (let i = 1; i <= 60; i++) {
+        let status = "upcoming";
+        if (i < 12) status = i === 7 ? "missed" : "done";
+        if (i === 12) status = "today";
+        arr.push({ day: i, status });
+      }
+      return arr;
+    })(),
+    streak: {
+      current: 4,      // days 8,9,10,11 -> restarted after the miss on day 7
+      longest: 6,
+      restartedOn: 8
+    },
+    completedCount: 10, // 11 days passed, day 7 missed
+    badges: [
+      { id: "first-commit", label: "First Commit", icon: "🔥", earned: true },
+      { id: "week-one", label: "Week One Done", icon: "🗓️", earned: true },
+      { id: "track-starter", label: "Track Starter", icon: "🧭", earned: true },
+      { id: "streak-7", label: "7-Day Streak", icon: "⚡", earned: false },
+      { id: "half-way", label: "Halfway There", icon: "🏁", earned: false }
+    ]
+  },
+  /* Day-by-day task bank. Only Day 12 is required, but a few neighbours
+     are included so the strip / nav have real content to point to. */
+  tasks: {
+    11: { title: "Recreate a component from a site you admire", track: "Web Development", status: "done" },
+    12: {
+      day: 12,
+      track: "Web Development",
+      title: "Build a responsive pricing table",
+      difficulty: "Beginner-friendly",
+      estMinutes: 75,
+      description: "Recruiters skim portfolios fast — a clean pricing table shows you can turn a common real-world UI pattern into responsive, production-looking markup without a template. Today you're building one from scratch: three tiers, one highlighted as \"most popular,\" fully responsive down to a 360px phone screen.",
+      requirements: [
+        "Three pricing tiers with a name, price, and feature list",
+        "One tier visually marked as \"most popular\"",
+        "Stacks into a single column below 480px width",
+        "Deployed link or a screen recording if you can't deploy today"
+      ],
+      resourceLabel: "Reference: Stripe & Notion pricing pages"
+    },
+    13: { title: "Add form validation to yesterday's build", track: "Web Development", status: "upcoming" }
+  }
+};
+
+/* ---------- shared render helpers ---------- */
+function renderCommitGrid(container, days, { cols = 10, mini = false } = {}) {
+  if (!container) return;
+  container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  container.innerHTML = days.map(d => {
+    let cls = "cell";
+    if (d.status === "done") cls += "";
+    return `<div class="cell ${d.status}" title="Day ${d.day} · ${d.status}"></div>`;
+  }).join("");
+}
+
+function pct(a, b) { return Math.round((a / b) * 100); }
+
+</script>
+<div class="app-shell">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>ABTalks</div>
+    <a href="../" class="icon-btn" aria-label="Profile" title="Landing">A</a>
+  </div>
+
+  <div class="db-body">
+    <div class="greet">
+      <div>
+        <h1 id="greet-name">Hey, Ananya 👋</h1>
+        <p id="greet-sub">Web Development track · Day 12 of 60</p>
+      </div>
+      <div class="streak-pill">
+        <span style="font-size:16px">🔥</span>
+        <div><b id="streak-num">4</b><span> day streak</span></div>
+      </div>
+    </div>
+
+    <div class="demo-switch" role="tablist" aria-label="Preview a different dashboard state">
+      <button class="active" data-state="day12" role="tab" aria-selected="true">Day 12 (current)</button>
+      <button data-state="new" role="tab" aria-selected="false">Day 1 (new)</button>
+      <button data-state="empty" role="tab" aria-selected="false">Empty profile</button>
+    </div>
+
+    <div id="banner-slot"></div>
+
+    <div class="today-card">
+      <div class="tag-row">
+        <span class="tag tag-amber" id="today-tag">DAY 12</span>
+        <span class="tag" id="today-track">WEB DEVELOPMENT</span>
+      </div>
+      <h2 id="today-title">Build a responsive pricing table</h2>
+      <p id="today-desc">Three tiers, one "most popular," fully responsive down to a 360px screen. About 75 minutes.</p>
+      <div class="today-meta">
+        <span>⏱️ <span id="today-time">~75 min</span></span>
+        <span>🎯 <span id="today-diff">Beginner-friendly</span></span>
+      </div>
+      <a href="../day/12/" class="btn btn-primary" id="today-cta">Start Day 12</a>
+    </div>
+
+    <div class="progress-row">
+      <div class="card progress-card">
+        <div class="label"><span>Challenge progress</span><span id="prog-label">Day 12 / 60</span></div>
+        <div class="bar-track"><div class="bar-fill" id="prog-bar" style="width:20%"></div></div>
+        <div class="num" id="prog-num">20%</div>
+      </div>
+      <div class="card progress-card">
+        <div class="label"><span>Overall completion</span><span id="comp-label">10 / 60</span></div>
+        <div class="bar-track"><div class="bar-fill" id="comp-bar" style="width:17%;background:linear-gradient(90deg,var(--cyan),#8fe9e3)"></div></div>
+        <div class="num" id="comp-num">17%</div>
+      </div>
+    </div>
+
+    <div class="section-title"><h3>Your standing</h3><a href="#" tabindex="-1">Leaderboard →</a></div>
+    <div class="badges" id="badges-row"></div>
+
+    <div class="section-title"><h3>60-day streak grid</h3><span class="mono" style="font-size:11px;color:var(--text-faint)">tap a day</span></div>
+    <div class="grid-panel db">
+      <div class="commit-grid" id="db-grid"></div>
+      <div class="grid-scale"><span>Day 1</span><span>Day 30</span><span>Day 60</span></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <a href="../dashboard/" class="active"><span class="ic">🏠</span>Home</a>
+      <a href="../day/12/"><span class="ic">📅</span>Today</a>
+      <a href="#"><span class="ic">🏆</span>Standing</a>
+      <a href="../"><span class="ic">👤</span>Profile</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const D = ABTALKS_DATA;
+  const bannerSlot = document.getElementById('banner-slot');
+  const badgesRow = document.getElementById('badges-row');
+
+  function buildDays(state){
+    const arr = [];
+    for (let i = 1; i <= 60; i++){
+      let status = "upcoming";
+      if (state === "day12"){
+        if (i < 12) status = (i === 7) ? "missed" : "done";
+        if (i === 12) status = "today";
+      } else if (state === "new"){
+        if (i === 1) status = "today";
+      } else if (state === "empty"){
+        // untouched profile — nothing done yet, further from the intro flow
+        if (i === 1) status = "today";
+      }
+      arr.push({ day: i, status });
+    }
+    return arr;
+  }
+
+  function render(state){
+    document.querySelectorAll('.demo-switch button').forEach(b=>{
+      const active = b.dataset.state === state;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', active);
+    });
+
+    const days = buildDays(state);
+    renderCommitGrid(document.getElementById('db-grid'), days, { cols: 12 });
+
+    if (state === "day12"){
+      document.getElementById('greet-name').textContent = "Hey, Ananya 👋";
+      document.getElementById('greet-sub').textContent = "Web Development track · Day 12 of 60";
+      document.getElementById('streak-num').textContent = "4";
+      bannerSlot.innerHTML = `<div class="banner banner-danger">⚠️ <span><b>You missed Day 7.</b> Your streak reset and restarted on Day 8 — your history for Day 7 still shows on your grid below.</span></div>`;
+      document.getElementById('today-tag').textContent = "DAY 12";
+      document.getElementById('today-track').textContent = "WEB DEVELOPMENT";
+      document.getElementById('today-title').textContent = "Build a responsive pricing table";
+      document.getElementById('today-desc').textContent = 'Three tiers, one "most popular," fully responsive down to a 360px screen. About 75 minutes.';
+      document.getElementById('today-cta').textContent = "Start Day 12";
+      document.getElementById('today-cta').href = "../day/12/";
+      document.getElementById('prog-label').textContent = "Day 12 / 60";
+      document.getElementById('prog-bar').style.width = pct(12,60)+"%";
+      document.getElementById('prog-num').textContent = pct(12,60)+"%";
+      document.getElementById('comp-label').textContent = "10 / 60";
+      document.getElementById('comp-bar').style.width = pct(10,60)+"%";
+      document.getElementById('comp-num').textContent = pct(10,60)+"%";
+      badgesRow.innerHTML = D.challenge.badges.map(b=>`
+        <div class="badge ${b.earned?'':'locked'}"><div class="ic">${b.icon}</div><b>${b.label}</b></div>
+      `).join('');
+    }
+
+    if (state === "new"){
+      document.getElementById('greet-name').textContent = "Welcome, Rahul 👋";
+      document.getElementById('greet-sub').textContent = "Web Development track · Day 1 of 60";
+      document.getElementById('streak-num').textContent = "0";
+      bannerSlot.innerHTML = `<div class="banner banner-amber">👋 <span><b>This is Day 1.</b> No pressure — one small task today is enough to start your streak.</span></div>`;
+      document.getElementById('today-tag').textContent = "DAY 1";
+      document.getElementById('today-title').textContent = "Set up your dev environment & say hello";
+      document.getElementById('today-desc').textContent = "Install your editor, create your first repo, and push a README that says who you are and what you're building toward.";
+      document.getElementById('today-cta').textContent = "Start Day 1";
+      document.getElementById('today-cta').href = "../day/12/";
+      document.getElementById('prog-label').textContent = "Day 1 / 60";
+      document.getElementById('prog-bar').style.width = pct(1,60)+"%";
+      document.getElementById('prog-num').textContent = pct(1,60)+"%";
+      document.getElementById('comp-label').textContent = "0 / 60";
+      document.getElementById('comp-bar').style.width = "2%";
+      document.getElementById('comp-num').textContent = "0%";
+      badgesRow.innerHTML = `<div class="empty-badges" style="width:100%"><b>No badges yet</b>Finish your first 3 days to unlock "First Commit."</div>`;
+    }
+
+    if (state === "empty"){
+      document.getElementById('greet-name').textContent = "Hey there 👋";
+      document.getElementById('greet-sub').textContent = "No track selected yet";
+      document.getElementById('streak-num').textContent = "0";
+      bannerSlot.innerHTML = `<div class="banner banner-amber">🧭 <span><b>Your profile is empty.</b> Pick a track to unlock today's task and start building your streak grid.</span></div>`;
+      document.getElementById('today-tag').textContent = "SETUP";
+      document.getElementById('today-track').textContent = "NO TRACK";
+      document.getElementById('today-title').textContent = "Choose a track to see your first task";
+      document.getElementById('today-desc').textContent = "Web, DSA, AI/ML, app dev, backend or design — pick one to generate your Day 1 task.";
+      document.getElementById('today-cta').textContent = "Choose your track";
+      document.getElementById('today-cta').href = "../";
+      document.getElementById('prog-label').textContent = "Day 0 / 60";
+      document.getElementById('prog-bar').style.width = "0%";
+      document.getElementById('prog-num').textContent = "0%";
+      document.getElementById('comp-label').textContent = "0 / 60";
+      document.getElementById('comp-bar').style.width = "0%";
+      document.getElementById('comp-num').textContent = "0%";
+      badgesRow.innerHTML = `<div class="empty-badges" style="width:100%"><b>Nothing here yet</b>Badges, streaks and standing all start once you pick a track.</div>`;
+    }
+  }
+
+  document.querySelectorAll('.demo-switch button').forEach(btn=>{
+    btn.addEventListener('click', ()=>render(btn.dataset.state));
+  });
+
+  render('day12');
+})();
+</script>
+
+</body>
+</html>
