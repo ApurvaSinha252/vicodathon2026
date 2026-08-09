@@ -1,0 +1,82 @@
+{
+  "student": {
+    "name": "Ananya",
+    "fullName": "Ananya Rao",
+    "track": "Web Development",
+    "college": "VIT, Vellore",
+    "year": "3rd Year",
+    "startDate": "2026-07-28"
+  },
+  "challenge": {
+    "totalDays": 60,
+    "currentDay": 12,
+    "streak": {
+      "current": 4,
+      "longest": 6,
+      "restartedOn": 8
+    },
+    "completedCount": 10,
+    "missedDays": [
+      7
+    ],
+    "badges": [
+      {
+        "id": "first-commit",
+        "label": "First Commit",
+        "icon": "🔥",
+        "earned": true
+      },
+      {
+        "id": "week-one",
+        "label": "Week One Done",
+        "icon": "🗓️",
+        "earned": true
+      },
+      {
+        "id": "track-starter",
+        "label": "Track Starter",
+        "icon": "🧭",
+        "earned": true
+      },
+      {
+        "id": "streak-7",
+        "label": "7-Day Streak",
+        "icon": "⚡",
+        "earned": false
+      },
+      {
+        "id": "half-way",
+        "label": "Halfway There",
+        "icon": "🏁",
+        "earned": false
+      }
+    ]
+  },
+  "tasks": {
+    "11": {
+      "title": "Recreate a component from a site you admire",
+      "track": "Web Development",
+      "status": "done"
+    },
+    "12": {
+      "day": 12,
+      "track": "Web Development",
+      "title": "Build a responsive pricing table",
+      "difficulty": "Beginner-friendly",
+      "estMinutes": 75,
+      "description": "Recruiters skim portfolios fast — a clean pricing table shows you can turn a common real-world UI pattern into responsive, production-looking markup without a template. Today you're building one from scratch: three tiers, one highlighted as \"most popular,\" fully responsive down to a 360px phone screen.",
+      "requirements": [
+        "Three pricing tiers with a name, price, and feature list",
+        "One tier visually marked as \"most popular\"",
+        "Stacks into a single column below 480px width",
+        "Deployed link or a screen recording if you can't deploy today"
+      ],
+      "resourceLabel": "Reference: Stripe & Notion pricing pages"
+    },
+    "13": {
+      "title": "Add form validation to yesterday's build",
+      "track": "Web Development",
+      "status": "upcoming"
+    }
+  }
+}
